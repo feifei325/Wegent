@@ -46,6 +46,7 @@ from app.schemas.task import (
     PromptDraftGenerateResponse,
     TaskArchiveBatchResponse,
     TaskArchiveResponse,
+    TaskBulkDeleteRequest,
     TaskCreate,
     TaskDetail,
     TaskInDB,
@@ -336,6 +337,34 @@ def delete_archived_tasks(
         db=db, user_id=current_user.id, client_origin=client_origin
     )
     return {"message": "Archived chats deleted successfully", "count": count}
+
+
+@router.delete("/bulk", response_model=TaskArchiveBatchResponse)
+def bulk_delete_tasks(
+    request: TaskBulkDeleteRequest,
+    client_origin: ClientOriginQuery = CLIENT_ORIGIN_FRONTEND,
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Soft delete a list of tasks owned by the current user (max 500 per call)."""
+    task_ids = request.task_ids[:500]
+    count = task_kinds_service.bulk_delete_tasks(
+        db=db, task_ids=task_ids, user_id=current_user.id, client_origin=client_origin
+    )
+    return {"message": "Tasks deleted successfully", "count": count}
+
+
+@router.delete("/all", response_model=TaskArchiveBatchResponse)
+def delete_all_personal_tasks(
+    client_origin: ClientOriginQuery = CLIENT_ORIGIN_FRONTEND,
+    current_user: User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Soft delete all active personal (non-group-chat) tasks owned by the current user."""
+    count = task_kinds_service.delete_all_personal_tasks(
+        db=db, user_id=current_user.id, client_origin=client_origin
+    )
+    return {"message": "All personal tasks deleted successfully", "count": count}
 
 
 @router.get("/{task_id}/runtime-check", response_model=TaskRuntimeCheck)

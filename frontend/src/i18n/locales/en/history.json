@@ -14,7 +14,8 @@
     "restore": "Restore",
     "clear_all": "Clear All",
     "export": "Export",
-    "search": "Search History"
+    "search": "Search History",
+    "select_all_count": "Select all {{count}} items"
   },
   "filters": {
     "all": "All",

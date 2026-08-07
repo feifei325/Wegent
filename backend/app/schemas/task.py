@@ -342,6 +342,12 @@ class TaskArchiveBatchResponse(BaseModel):
     count: int
 
 
+class TaskBulkDeleteRequest(BaseModel):
+    """Request body for bulk task deletion."""
+
+    task_ids: list[int]
+
+
 class PipelineStageInfo(BaseModel):
     """Information about pipeline stages for a task"""
 

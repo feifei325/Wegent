@@ -14,7 +14,8 @@
     "restore": "恢复",
     "clear_all": "清空全部",
     "export": "导出",
-    "search": "搜索历史"
+    "search": "搜索历史",
+    "select_all_count": "全选所有 {{count}} 条"
   },
   "filters": {
     "all": "全部",

@@ -949,6 +949,50 @@ class TaskOperationsMixin:
             )
         return len(task_ids)
 
+    def bulk_delete_tasks(
+        self,
+        db: Session,
+        *,
+        task_ids: list[int],
+        user_id: int,
+        client_origin: Optional[str] = None,
+    ) -> int:
+        """Soft delete a list of tasks owned by a user."""
+        count = 0
+        for task_id in task_ids:
+            try:
+                self.delete_task(
+                    db=db, task_id=task_id, user_id=user_id, client_origin=client_origin
+                )
+                count += 1
+            except Exception:
+                logger.warning("bulk_delete_tasks: failed to delete task_id=%s", task_id)
+        return count
+
+    def delete_all_personal_tasks(
+        self,
+        db: Session,
+        *,
+        user_id: int,
+        client_origin: Optional[str] = None,
+    ) -> int:
+        """Soft delete all active personal (non-group-chat) tasks owned by a user."""
+        tasks = task_stores.task_store.list_archivable_active_tasks(
+            db, user_id=user_id, scope="all"
+        )
+        personal_tasks = [t for t in tasks if not t.is_group_chat]
+        task_ids = [t.id for t in personal_tasks]
+        for task_id in task_ids:
+            try:
+                self.delete_task(
+                    db=db, task_id=task_id, user_id=user_id, client_origin=client_origin
+                )
+            except Exception:
+                logger.warning(
+                    "delete_all_personal_tasks: failed to delete task_id=%s", task_id
+                )
+        return len(task_ids)
+
     def _archive_tasks(self, db: Session, tasks: list[TaskResource]) -> int:
         archived_count = 0
         for task in tasks:
