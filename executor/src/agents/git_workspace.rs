@@ -303,7 +303,7 @@ fn resolve_workspace_path(path: &str) -> PathBuf {
     }
 }
 
-fn expand_tilde(path: &str) -> PathBuf {
+pub(super) fn expand_tilde(path: &str) -> PathBuf {
     if path == "~" {
         return home_dir().unwrap_or_else(|| PathBuf::from(path));
     }

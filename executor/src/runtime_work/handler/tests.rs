@@ -3408,6 +3408,54 @@ fn cached_user_message_preserves_attachment_only_messages() {
 }
 
 #[test]
+fn user_message_presentation_matches_shared_reference_fixtures() {
+    let fixtures: Vec<Value> = serde_json::from_str(include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../packages/chat-core/test-fixtures/prompt-mentions.json"
+    )))
+    .unwrap();
+    for fixture in fixtures {
+        let presentation = user_message_presentation(&json!({
+            "clientUserMessageId": "shared-reference",
+            "message": fixture["reference"],
+        }))
+        .unwrap();
+        let expected = match fixture["kind"].as_str() {
+            Some("skill") => json!([{
+                "token": format!("${}", fixture["name"].as_str().unwrap()),
+                "href": fixture["href"],
+            }]),
+            Some("plugin") => json!([{
+                "token": format!("@{}", fixture["name"].as_str().unwrap()),
+                "href": fixture["href"],
+            }]),
+            _ => json!([]),
+        };
+        assert_eq!(presentation["content"], fixture["reference"]);
+        assert_eq!(presentation["references"], expected, "{fixture}");
+    }
+}
+
+#[test]
+fn user_message_presentation_preserves_home_relative_skill_references() {
+    let content = "Use [$test-skill](~/.agents/skills/test-skill/SKILL.md)";
+    let presentation = user_message_presentation(&json!({
+        "clientUserMessageId": "home-relative-skill",
+        "message": content,
+    }))
+    .expect("home-relative skills should produce presentation metadata");
+
+    assert_eq!(presentation["content"], content);
+    assert_eq!(
+        presentation["references"],
+        json!([{
+            "token": "$test-skill",
+            "href": "~/.agents/skills/test-skill/SKILL.md",
+        }])
+    );
+}
+
+#[test]
 fn user_message_presentation_preserves_visible_content_and_references() {
     let presentation = user_message_presentation(&json!({
         "clientUserMessageId": "runtime-local-pane-1",
