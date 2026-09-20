@@ -7868,10 +7868,9 @@ describe('DesktopWorkbenchLayout', () => {
     )
 
     expect(await within(sideChat).findByTestId('attachment-badge')).toBeInTheDocument()
-    expect(within(sideChat).getByTestId('attachment-text-preview')).toHaveAttribute(
-      'title',
-      'side chat'
-    )
+    expect(within(sideChat).getByTestId('attachment-document-icon')).toBeInTheDocument()
+    expect(within(sideChat).getByTitle('side-chat.txt')).toBeInTheDocument()
+    expect(within(sideChat).queryByTestId('attachment-text-preview')).not.toBeInTheDocument()
     expect(baseProps.projectChat.handleFileSelect).not.toHaveBeenCalled()
     expect(screen.getAllByTestId('attachment-badge')).toHaveLength(1)
 
@@ -8155,7 +8154,9 @@ describe('DesktopWorkbenchLayout', () => {
       within(sideChat).getByTestId('attachment-file-input'),
       new File(['queued attachment'], 'queued-attachment.txt', { type: 'text/plain' })
     )
-    expect(await within(sideChat).findByTitle('queued attachment')).toBeInTheDocument()
+    expect(
+      await within(sideChat).findByTestId('attachment-document-preview-button')
+    ).toHaveAccessibleName('queued-attachment.txt')
     await userEvent.type(sideChatInput, 'queued follow-up')
     await userEvent.click(within(sideChat).getByTestId('send-message-button'))
     expect(within(sideChat).getByTestId('conversation-queue-panel')).toBeInTheDocument()
@@ -8164,15 +8165,17 @@ describe('DesktopWorkbenchLayout', () => {
       within(sideChat).getByTestId('attachment-file-input'),
       new File(['draft attachment'], 'draft-attachment.txt', { type: 'text/plain' })
     )
-    expect(await within(sideChat).findByTitle('draft attachment')).toBeInTheDocument()
+    expect(
+      await within(sideChat).findByTestId('attachment-document-preview-button')
+    ).toHaveAccessibleName('draft-attachment.txt')
 
     await userEvent.click(within(sideChat).getByTestId(/queue-more-button-/))
     await userEvent.click(await screen.findByTestId(/queue-edit-button-/))
 
     await waitFor(() => expect(sideChatInput).toHaveValue('queued follow-up'))
     expect(within(sideChat).getAllByTestId('attachment-badge')).toHaveLength(1)
-    expect(within(sideChat).getByTitle('queued attachment')).toBeInTheDocument()
-    expect(within(sideChat).queryByTitle('draft attachment')).not.toBeInTheDocument()
+    expect(within(sideChat).getByTitle('queued-attachment.txt')).toBeInTheDocument()
+    expect(within(sideChat).queryByTitle('draft-attachment.txt')).not.toBeInTheDocument()
   }, 30_000)
 
   test('temporary chat keeps a stale busy rejection queued without blind retries', async () => {
