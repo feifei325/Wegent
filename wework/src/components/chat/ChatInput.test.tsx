@@ -255,7 +255,8 @@ describe('ChatInput', () => {
       'shadow-[0_0_0_0.5px_rgba(13,13,13,0.12),0_3px_7.5px_rgba(0,0,0,0.04),0_0_20px_rgba(0,0,0,0.05)]'
     )
     expect(input).toHaveAttribute('rows', '2')
-    expect(input).toHaveClass('min-h-12', 'max-h-[112px]', 'pt-1', 'placeholder:text-text-muted/55')
+    expect(input).toHaveClass('min-h-12', 'pt-1', 'placeholder:text-text-muted/55')
+    expect(input.closest('[data-composer-scroll-container]')).toBeInTheDocument()
     fireEvent.click(input)
     expect(form).toHaveAttribute('data-short-expanded', 'true')
     fireEvent.pointerDown(document.body)
@@ -1809,7 +1810,9 @@ describe('ChatInput', () => {
         getData: (type: string) => (type === 'text/plain' ? text : ''),
       },
     })
-    expect(await screen.findByTestId('attachment-text-preview')).toHaveTextContent('test')
+    const card = await screen.findByTestId('attachment-badge')
+    expect(within(card).getByTestId('attachment-text-preview')).toHaveTextContent('test')
+    expect(screen.queryByTestId('uploading-attachment-badge')).not.toBeInTheDocument()
     expect(screen.queryByTestId('attachment-document-icon')).not.toBeInTheDocument()
     expect(screen.getByTestId('attachment-badge-list')).toHaveClass('overflow-x-auto')
     expect(screen.getByTestId('attachment-badge-list')).not.toHaveClass('flex-wrap')
@@ -1861,10 +1864,15 @@ describe('ChatInput', () => {
       )
     expect(cards()).toHaveLength(2)
     expect(cards()[0]).toHaveTextContent(file.name)
-    expect(cards()[1]).toHaveTextContent(pastedFile.name)
+    expect(cards()[1]).toHaveAttribute('aria-busy', 'true')
+    await waitFor(() =>
+      expect(within(cards()[1]).getByTestId('attachment-text-preview')).toHaveTextContent('test')
+    )
+    expect(cards()[1]).not.toHaveTextContent(pastedFile.name)
 
     await finish(pastedFile, 101)
-    await screen.findByTestId('attachment-text-preview')
+    await screen.findByTestId('attachment-badge')
+    expect(cards()[1]).not.toHaveAttribute('aria-busy')
     expect(cards()[0]).toHaveTextContent(file.name)
     expect(within(cards()[1]).getByTestId('attachment-text-preview')).toHaveTextContent('test')
 

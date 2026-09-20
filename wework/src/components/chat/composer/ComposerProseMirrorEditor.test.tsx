@@ -487,7 +487,20 @@ describe('ComposerProseMirrorEditor', () => {
     expect(editorRef.current?.getSnapshot().selectionOffset).toBe(selectionOffset)
   })
 
-  test('keeps line breaks when pasting rich text', () => {
+  test.each([
+    {
+      kind: 'paragraphs',
+      html: '<p>first line</p><p>second line</p><p>third line</p>',
+      expected: 'first line\n\nsecond line\n\nthird line',
+      paragraphs: 3,
+    },
+    {
+      kind: 'hard breaks',
+      html: '<p>first line<br>second line<br>third line</p>',
+      expected: 'first line\nsecond line\nthird line',
+      paragraphs: 1,
+    },
+  ])('preserves $kind when pasting rich text', ({ html, expected, paragraphs }) => {
     const { editorRef, onChange } = renderEditor('')
     const editor = screen.getByTestId('composer-editor')
 
@@ -496,14 +509,15 @@ describe('ComposerProseMirrorEditor', () => {
         files: [],
         getData: (type: string) => {
           if (type === 'text/plain') return 'first line\nsecond line\nthird line'
-          if (type === 'text/html') return '<p>first line</p><p>second line</p><p>third line</p>'
+          if (type === 'text/html') return html
           return ''
         },
         types: ['text/plain', 'text/html'],
       },
     })
 
-    expect(editorRef.current?.getSnapshot().value).toBe('first line\nsecond line\nthird line')
+    expect(editorRef.current?.getSnapshot().value).toBe(expected)
+    expect(editor.querySelectorAll('p')).toHaveLength(paragraphs)
     expect(onChange).toHaveBeenCalledOnce()
   })
 
