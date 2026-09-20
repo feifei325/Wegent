@@ -5112,6 +5112,11 @@ fn cached_codex_link_stays_visible_until_provider_thread_is_discovered() {
 #[tokio::test]
 async fn cached_task_list_uses_the_existing_runtime_work_store() {
     let (handler, root) = isolated_runtime_work_handler("cached-task-list");
+    let project_index = CodexGlobalProjectIndex::from_test_payload(
+        json!({ "electron-saved-workspace-roots": ["/tmp/cached-project"] })
+            .as_object()
+            .unwrap(),
+    );
     handler.upsert_local_task(RuntimeTaskLink {
         local_task_id: "local-task-1".to_owned(),
         runtime: "claude".to_owned(),
@@ -5122,7 +5127,11 @@ async fn cached_task_list_uses_the_existing_runtime_work_store() {
     });
 
     let response = handler
-        .list_tasks(&json!({ "preferCached": true }))
+        .list_tasks_with_project_index(
+            &json!({ "preferCached": true }),
+            &project_index,
+            Instant::now(),
+        )
         .await
         .expect("cached task list should be available");
     let tasks = response["workspaces"]
